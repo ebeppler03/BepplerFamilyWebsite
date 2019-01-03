@@ -1,0 +1,17 @@
+<!DOCTYPE=html>
+<html>
+<head>
+    <title>
+        Eric's Pictures
+    </title>
+</head>
+<body>
+	<h1 class="w3-hide-large" style="white-space:nowrap">Click an image to see the full version</h1>
+    {% for image in images %}
+	<!-- <img src="{{url_for('static', filename=hist)}}" alt="{{hist}}"> -->
+	<a href="./{{image}}"><img class="w3-image" src="{{ url_for('static', filename=image) }}" alt="{{image}}" ></a>
+    <a href="./{{image}}"><h5 class="w3-hide-large" style="white-space:nowrap">"{{image}}"</h5></a>
+	<!-- <br><br><br> -->
+    {% endfor %}
+</body>
+</html>
