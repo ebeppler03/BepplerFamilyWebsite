@@ -118,6 +118,17 @@ def index(): #enumerates pictures in directory to allow listing of all
 	return render_template('photos.html', images = thumbnails)
     #return render_template('photos.html')
 
+@app.route('/photofolders')
+def photofolders(): #enumerates pictures in directory to allow listing of all
+#	app.logger.info('Info')
+	createThumbnails()
+	images = os.listdir(static_dir)
+	thumbnails = [img for img in images if img.startswith('T_')]
+	thumbnails = ['eric/' + file for file in thumbnails]
+	thumbnails.sort()
+	return render_template('photos.html', images = thumbnails)
+    #return render_template('photos.html')
+
 @app.route('/devices/ECB_DEV_0/messages/events',methods=['POST'])
 def temp():
 	app.logger.info('\r\nData: %s', request.get_json())
