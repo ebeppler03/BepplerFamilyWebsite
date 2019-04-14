@@ -1,17 +1,28 @@
 <!DOCTYPE=html>
 <html>
 <head>
-    <title>
-        Eric's Pictures
-    </title>
+    <title>Eric's Pictures</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
+    <!-- TODO add table class to CSS to use here -->
+    <h1 class="w3-hide-large" style="white-space:nowrap">Click a folder to see images within</h1>
+    <div class="row" >
+        {% for folder in folders %}
+        <div class="column" >
+            <div class="grid-item" style="display:inline grid-row-start:1 grid-row-end:2"   >
+                <a href=".?dir={{folder}}"><img class="w3-image" src="{{ url_for('static', filename='folder.jpg') }}" alt="Folder Icon" style="width:64px" ></a>
+            </div>
+            <div class="grid-item" style="display:inline grid-row-start:2 grid-row-end:3" >
+                <a href=".?dir={{folder}}"><h5 class="w3-hide-large" style="display:inline;width:200px;white-space:nowrap">"{{folder}}"</h5></a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 	<h1 class="w3-hide-large" style="white-space:nowrap">Click an image to see the full version</h1>
     {% for image in images %}
-	<!-- <img src="{{url_for('static', filename=hist)}}" alt="{{hist}}"> -->
-	<a href="./{{image}}"><img class="w3-image" src="{{ url_for('static', filename=image) }}" alt="{{image}}" ></a>
-    <a href="./{{image}}"><h5 class="w3-hide-large" style="white-space:nowrap">"{{image}}"</h5></a>
-	<!-- <br><br><br> -->
+	<a href="../photo?pic={{image}}"><img class="w3-image" src="{{ url_for('static', filename=image) }}" alt="{{image}}" ></a>
+    <a href="../photo?pic={{image}}"><h5 class="w3-hide-large" style="white-space:nowrap">"{{image}}"</h5></a>
     {% endfor %}
 </body>
 </html>

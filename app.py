@@ -5,6 +5,7 @@ import glob
 from PIL import Image
 from flask_mail import Mail, Message
 import config, requests, json
+import thumbnail
 from flask_recaptcha import ReCaptcha
 from validate_email import validate_email
 import logging
@@ -29,6 +30,7 @@ app.config.update({'RECAPTCHA_ENABLED': True,
                        config.secretkey})
 recaptcha = ReCaptcha(app=app)
 
+#setup all the logging
 @app.before_request
 def log_request_info():
 	try:
@@ -37,97 +39,80 @@ def log_request_info():
 		app.logger.info('IP Addr: %s', request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
 	except:
 		print("Erorr getting IP or other data")
-    
-port = '80'
+
+#configure the connections and ports
+#if this is dev use 8080, otherwise use 80    
+port = '8080'
 hostname = socket.gethostname()
 ip = socket.gethostbyname(hostname)  
 
 
-
+#get the server directory and setup the static directory
 if len(sys.argv) > 1:
 	server_dir = str(sys.argv[1])
 else:
 	server_dir = os.getcwd()
-
+static_dir = server_dir + '/static/photos'
 print("Running from Server directory: " + server_dir)
+print("static dir: " + static_dir)
+photo_dir = server_dir + '/static/photos'
+static_dir = server_dir + '/static'
 
-static_dir = server_dir + '/static/eric'
-static_dir_format =  "*.JPG"
+thumbnail.createThumbnails(static_dir) #make thumbnails now to save load time
 
-def createThumbnails():
-	# get all the jpg files from the static/eric folder and make thumbnails
-	static_dir = server_dir + '/static/eric'
-	static_dir_format =  "*.JPG"
-	os.chdir(static_dir)
-	print("Moved CWD to: " + os.getcwd())
-	print("Looking for obsolete thumbnails")
-	thb = [ fn for fn in glob.glob(static_dir_format) if os.path.basename(fn).startswith('T_')]
-	for x in thb:
-		if not os.path.isfile(os.getcwd() + "/" + x[2:]):
-			print("Removing :" + os.getcwd() + x)
-			os.remove(os.getcwd() + "/" + x)
-	print("Looking for files of type: " + static_dir_format +" in : " + static_dir)
-	files = [ fn for fn in glob.glob(static_dir_format) if not os.path.basename(fn).startswith('T_')]
-	file_count = 0
-	for infile in files:
-	  if os.path.isfile(os.getcwd() + '/T_' + infile):
-	  	continue
-	  print("Creating Thumnail for: " + infile)
-	  file_count = file_count + 1
-	  im = Image.open(infile)
-	  # don't save if thumbnail already exists
-	  if infile[0:2] != "T_":
-		# convert to thumbnail image
-		im.thumbnail((512, 512), Image.ANTIALIAS)
-		# prefix thumbnail file with T_
-		im.save("T_" + infile, "JPEG")
-	static_dir_format = "*.jpg"
-	print("Looking for files of type: " + static_dir_format +" in : " + static_dir)
-	files = [ fn for fn in glob.glob(static_dir_format) if not os.path.basename(fn).startswith('T_')]
-	file_count = 0
-	for infile in files:
-	  if os.path.isfile(os.getcwd() + '/T_' + infile):
-	  	continue
-	  print("Creating Thumnail for: " + infile)
-	  file_count = file_count + 1
-	  im = Image.open(infile)
-	  # don't save if thumbnail already exists
-	  if infile[0:2] != "T_":
-		# convert to thumbnail image
-		im.thumbnail((512, 512), Image.ANTIALIAS)
-		# prefix thumbnail file with T_
-		im.save("T_" + infile, "JPEG")
-	
-	os.chdir(server_dir)
-	print("Created " + str(file_count) + " Thumnails")
-	print("Moved CWD to: " + os.getcwd())
-	pass
-
-
-
-createThumbnails()
-
-@app.route('/photos')
-def index(): #enumerates pictures in directory to allow listing of all
-#	app.logger.info('Info')
-	createThumbnails()
-	images = os.listdir(static_dir)
-	thumbnails = [img for img in images if img.startswith('T_')]
-	thumbnails = ['eric/' + file for file in thumbnails]
-	thumbnails.sort()
-	return render_template('photos.html', images = thumbnails)
-    #return render_template('photos.html')
+# @app.route('/photos')
+# def index(): #enumerates pictures in directory to allow listing of all
+# #	app.logger.info('Info')
+# 	thumbnails = []
+# 	#photo_dir = server_dir + '/static/photos'
+# 	#os.chdir(static_dir)
+# 	#print("Moved CWD to: " + os.getcwd())
+# 	thumbnail.createThumbnails(photo_dir)
+# 	#static_dir = server_dir + '/static'
+# 	#images = os.listdir(static_dir)
+# 	for root, dirs, files in os.walk(static_dir):
+# 		for file in files:
+# 			rel_dir = os.path.relpath(root, static_dir)
+# 			if os.path.basename(file).startswith('T_'):
+# 				thumbnails.append(os.path.join(rel_dir, file))
+# 	thumbnails.sort()
+# 	os.chdir(server_dir)
+# 	#eric fix the template path!
+# 	return render_template('photos.html', images = thumbnails)
+#     #return render_template('photos.html')
 
 @app.route('/photofolders')
+@app.route('/photofolders/')
 def photofolders(): #enumerates pictures in directory to allow listing of all
-#	app.logger.info('Info')
-	createThumbnails()
-	images = os.listdir(static_dir)
-	thumbnails = [img for img in images if img.startswith('T_')]
-	thumbnails = ['eric/' + file for file in thumbnails]
-	thumbnails.sort()
-	return render_template('photos.html', images = thumbnails)
-    #return render_template('photos.html')
+	unsafe_directory = request.args.get('dir',default = None, type = str)
+	if unsafe_directory is not None:
+		directory = unsafe_directory.replace('..','')
+	else:
+		directory = None
+	print directory
+	thumbnails = []
+	pic_folders = []
+	thumbnail.createThumbnails(photo_dir)
+	#photo_dir = server_dir + '/static/photos'
+	if directory is None:
+		directory = server_dir + '/static/photos'
+	elif directory == "photos":
+		directory = server_dir + '/static/photos'
+	else:
+		directory = server_dir + '/static/photos/' + directory
+	if not os.path.isdir(directory):
+		directory = server_dir + '/static/photos'
+	for root, dirs, files in os.walk(directory):
+		for file in files:
+			rel_dir = os.path.relpath(root, static_dir)
+			if os.path.basename(file).startswith('T_'):
+				thumbnails.append(os.path.join(rel_dir, file))
+		for direc in dirs:
+			rel_dir = os.path.relpath(root, photo_dir)
+			pic_folders.append(os.path.join(rel_dir,direc))
+		#pull out pics and folders here
+	#check if dir exists in current path, save path, check for sub dirs, if none show pics, if load with modded path
+	return render_template('photos.html', folders = pic_folders, images = thumbnails)
 
 @app.route('/devices/ECB_DEV_0/messages/events',methods=['POST'])
 def temp():
@@ -144,14 +129,18 @@ def goaway():
 #	app.logger.info('Info')
 	return render_template('goaway.html')
 
-@app.route('/eric/<variable>', methods=['GET'])
-def getPhoto(variable):
+@app.route('/photo/')
+@app.route('/photo')
+def getPhoto():
 	#print(variable)
 #	app.logger.info('Info')
-	variable = variable[2:]
-	variable = 'eric/' + variable
+	thumbnail = request.args.get('pic',default = None, type = str)
+	full_photo = thumbnail.replace('T_','')
+	#create path to photo from static
+	# variable = variable[2:]
+	# variable = 'photos/' + variable
 	#print(variable)
-	return render_template("photo.html",image=variable)
+	return render_template("photo.html",image=full_photo)
 
 @app.route('/', methods=['GET', 'POST'])
 def landing():
@@ -191,7 +180,7 @@ if __name__ == '__main__':
 	handler.setFormatter(formatter)
 	app.logger.addHandler(handler)
 	app.logger.setLevel(logging.DEBUG)
-	app.run(debug='true',host='0.0.0.0',port=port)	
+	app.run(debug='true',host='0.0.0.0',port=port,threaded=True)	
 	
 
 #https://www.w3schools.com/w3css/tryit.asp?filename=tryw3css_images_album
