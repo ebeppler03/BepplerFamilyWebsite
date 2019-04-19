@@ -42,7 +42,7 @@ def log_request_info():
 
 #configure the connections and ports
 #if this is dev use 8080, otherwise use 80    
-port = '8080'
+port = '80'
 hostname = socket.gethostname()
 ip = socket.gethostbyname(hostname)  
 
@@ -81,6 +81,7 @@ thumbnail.createThumbnails(static_dir) #make thumbnails now to save load time
 # 	return render_template('photos.html', images = thumbnails)
 #     #return render_template('photos.html')
 
+@app.route('/photos')
 @app.route('/photofolders')
 @app.route('/photofolders/')
 def photofolders(): #enumerates pictures in directory to allow listing of all
@@ -102,11 +103,12 @@ def photofolders(): #enumerates pictures in directory to allow listing of all
 		directory = server_dir + '/static/photos/' + directory
 	if not os.path.isdir(directory):
 		directory = server_dir + '/static/photos'
+	files = os.listdir(directory)
+	for f in files:
+		if os.path.basename(f).startswith('T_'):
+			rel_dir = os.path.relpath(directory, static_dir)	
+			thumbnails.append(os.path.join(rel_dir, f))
 	for root, dirs, files in os.walk(directory):
-		for file in files:
-			rel_dir = os.path.relpath(root, static_dir)
-			if os.path.basename(file).startswith('T_'):
-				thumbnails.append(os.path.join(rel_dir, file))
 		for direc in dirs:
 			rel_dir = os.path.relpath(root, photo_dir)
 			pic_folders.append(os.path.join(rel_dir,direc))
