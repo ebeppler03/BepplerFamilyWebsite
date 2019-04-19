@@ -82,6 +82,7 @@ thumbnail.createThumbnails(static_dir) #make thumbnails now to save load time
 #     #return render_template('photos.html')
 
 @app.route('/photos')
+@app.route('/photos/')
 @app.route('/photofolders')
 @app.route('/photofolders/')
 def photofolders(): #enumerates pictures in directory to allow listing of all

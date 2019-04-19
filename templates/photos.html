@@ -3,26 +3,87 @@
 <head>
     <title>Eric's Pictures</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 </head>
 <body>
     <!-- TODO add table class to CSS to use here -->
+    {% if folders %}
     <h1 class="w3-hide-large" style="white-space:nowrap">Click a folder to see images within</h1>
     <div class="row" >
         {% for folder in folders %}
         <div class="column" >
             <div class="grid-item" style="display:inline grid-row-start:1 grid-row-end:2"   >
-                <a href=".?dir={{folder}}"><img class="w3-image" src="{{ url_for('static', filename='folder.jpg') }}" alt="Folder Icon" style="width:64px" ></a>
+                <a href="/photofolders/?dir={{folder}}"><img class="w3-image" src="{{ url_for('static', filename='folder.jpg') }}" alt="Folder Icon" style="width:64px" ></a>
             </div>
             <div class="grid-item" style="display:inline grid-row-start:2 grid-row-end:3" >
-                <a href=".?dir={{folder}}"><h5 class="w3-hide-large" style="display:inline;width:200px;white-space:nowrap">"{{folder}}"</h5></a>
+                <a href="/photofolders/?dir={{folder}}"><h5 class="w3-hide-large" style="display:inline;width:200px;white-space:nowrap">"{{folder}}"</h5></a>
             </div>
         </div>
         {% endfor %}
     </div>
-	<h1 class="w3-hide-large" style="white-space:nowrap">Click an image to see the full version</h1>
+    {% endif %}
+
+
+    {% if images %}
+        <h1 class="w3-hide-large" style="white-space:nowrap">Click an image to see the full version</h1>
+        <h3> Images will load slowly - Click the link to open in a new window</h3>
+    {% for image in images %}
+    <div class="responsive">
+        <div class="gallery">
+            <!-- <a target="_top" href="../photo?pic={{image}}"> -->
+                <img class="myImg" src="{{ url_for('static', filename=image) }}" alt="{{image}}" >
+            <!-- </a> -->
+            <div class="desc"><a href="../photo?pic={{image}}">"{{image}}"</a></div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+      <!-- The Close Button -->
+      <span class="close" onclick="document.getElementById('myModal').style.display='none'">&times;</span>
+
+      <!-- Modal Content (The Image) -->
+      <img class="modal-content" id="img01">
+
+      <!-- Modal Caption (Image Text) -->
+      <div id="caption"></div>
+    </div>
+
+    <!-- Old below here -->
+<!-- 	<h1 class="w3-hide-large" style="white-space:nowrap">Click an image to see the full version</h1>
     {% for image in images %}
 	<a href="../photo?pic={{image}}"><img class="w3-image" src="{{ url_for('static', filename=image) }}" alt="{{image}}" ></a>
     <a href="../photo?pic={{image}}"><h5 class="w3-hide-large" style="white-space:nowrap">"{{image}}"</h5></a>
-    {% endfor %}
+    {% endfor %} -->
+
+
+
+
+    <script>
+    var modal = document.getElementById('myModal');
+
+    /*// Get the image and insert it inside the modal - use its "alt" text as a caption*/
+    var img = $('.myImg');
+    var modalImg = $("#img01");
+    var captionText = document.getElementById("caption");
+    $('.myImg').click(function(){
+        modal.style.display = "block";
+        var newSrc = this.src;
+        var finalSrc = newSrc.replace("T_","")
+        modalImg.attr('src', finalSrc);
+        captionText.innerHTML = this.alt;
+    });
+
+    /*// Get the <span> element that closes the modal*/
+    var span = document.getElementsByClassName("close")[0];
+
+    /*// When the user clicks on <span> (x), close the modal
+    */span.onclick = function() {
+      modal.style.display = "none";
+    }
+    </script>
 </body>
 </html>
